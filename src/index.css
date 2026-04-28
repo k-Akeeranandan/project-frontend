@@ -1,0 +1,13 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+h1, h2, h3 {
+  color: #333;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
