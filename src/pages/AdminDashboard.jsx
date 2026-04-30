@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createEvent, deleteEvent, getAllEventsAdmin } from "../services/eventService";
 import { createBooth, deleteBooth, getBoothApplicants } from "../services/boothService";
+import { getEventStatus } from "../utils/eventStatus";
 import {
   getAllRegistrations,
   getAllBoothsAdmin,
@@ -39,6 +40,15 @@ function AdminDashboard() {
   const [approvalBusyId, setApprovalBusyId] = useState(null);
   const [registrationsLoadError, setRegistrationsLoadError] = useState("");
   const [modifyDecisionUserId, setModifyDecisionUserId] = useState(null);
+  const [detailsUser, setDetailsUser] = useState(null);
+
+  const selectableEvents = events.filter((event) => getEventStatus(event?.date) !== "CLOSED");
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+    const stillSelectable = selectableEvents.some((e) => String(e.id) === String(selectedEventId));
+    if (!stillSelectable) setSelectedEventId("");
+  }, [selectedEventId, selectableEvents]);
 
   useEffect(() => {
     // Check if user is admin
@@ -126,8 +136,18 @@ function AdminDashboard() {
     }
   };
 
+  const openUserDetails = (user) => setDetailsUser(user || null);
+  const closeUserDetails = () => setDetailsUser(null);
+
+  const formatValue = (value) => {
+    if (value === undefined || value === null) return "—";
+    if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
+    if (typeof value === "string") return value.trim() ? value : "—";
+    return String(value);
+  };
+
   const statusBadgeStyle = (status) => {
-    const s = status || "APPROVED";
+    const s = status || "PENDING";
     if (s === "PENDING") return { background: "#fef3c7", color: "#b45309" };
     if (s === "REJECTED") return { background: "#fee2e2", color: "#b91c1c" };
     return { background: "#d1fae5", color: "#047857" };
@@ -138,6 +158,7 @@ function AdminDashboard() {
     try {
       await approveUser(userId);
       showSuccess("User approved. They can sign in now (email sent if mail is configured).");
+      window.alert("Applicant approved successfully.");
       await loadDashboardData();
       setModifyDecisionUserId(null);
     } catch (e) {
@@ -159,6 +180,7 @@ function AdminDashboard() {
     try {
       await rejectUser(userId);
       showSuccess("User rejected.");
+      window.alert("Applicant rejected successfully.");
       await loadDashboardData();
       setModifyDecisionUserId(null);
     } catch (e) {
@@ -187,9 +209,6 @@ function AdminDashboard() {
     fontSize: "0.75rem",
     fontWeight: "600",
   });
-
-  const usersWithResume = registrations.filter((user) => userHasApplied(user) && userHasResume(user));
-  const usersWithoutResume = registrations.filter((user) => userHasApplied(user) && !userHasResume(user));
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
@@ -487,7 +506,7 @@ function AdminDashboard() {
             }}
           >
             <option value="">Select Event</option>
-            {events.map(event => (
+            {selectableEvents.map(event => (
               <option key={event.id} value={event.id}>{event.title}</option>
             ))}
           </select>
@@ -672,6 +691,38 @@ function AdminDashboard() {
           </div>
         )}
 
+        {success && (
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "12px 14px",
+              background: "#dcfce7",
+              color: "#166534",
+              borderRadius: "8px",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+            }}
+          >
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "12px 14px",
+              background: "#fee2e2",
+              color: "#991b1b",
+              borderRadius: "8px",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <div style={{ marginTop: "15px" }}>
           {!registrationsLoadError && registrations.length === 0 && (
             <p style={{ color: "#64748b", fontSize: "0.95rem" }}>No registered users yet.</p>
@@ -717,7 +768,7 @@ function AdminDashboard() {
                           ...statusBadgeStyle(user.accountStatus),
                         }}
                       >
-                        {(user.accountStatus || "APPROVED").replace("_", " ")}
+                        {(user.accountStatus || "PENDING").replace("_", " ")}
                       </div>
                     )}
                     {user.resumeOriginalFileName && (
@@ -756,6 +807,16 @@ function AdminDashboard() {
                           >
                             Download
                           </button>
+                          <button
+                            type="button"
+                            style={{
+                              ...resumeButtonStyle(false),
+                              background: "#111827",
+                            }}
+                            onClick={() => openUserDetails(user)}
+                          >
+                            View details
+                          </button>
                         </div>
                       ) : (
                         <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>No certificate uploaded</span>
@@ -768,7 +829,7 @@ function AdminDashboard() {
                           Application decision
                         </div>
                         {(() => {
-                          const status = user.accountStatus || "APPROVED";
+                          const status = user.accountStatus || "PENDING";
                           const decided = status === "APPROVED" || status === "REJECTED";
                           const isModifying = modifyDecisionUserId === user.id;
                           const showChoices = !decided || isModifying;
@@ -968,6 +1029,119 @@ function AdminDashboard() {
       {activeTab === "events" && renderEvents()}
       {activeTab === "booths" && renderBooths()}
       {activeTab === "registrations" && renderRegistrations()}
+
+      {detailsUser && (
+        <div
+          className="details-modal-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeUserDetails();
+          }}
+          role="presentation"
+        >
+          <div className="details-modal" role="dialog" aria-modal="true" aria-label="User details">
+            <div className="details-modal-header">
+              <div>
+                <div className="details-step-chip">User details</div>
+                <h3 className="details-modal-title">{formatValue(detailsUser?.name)}</h3>
+                <p className="details-modal-description">
+                  {formatValue(detailsUser?.email)}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="details-close-button"
+                onClick={closeUserDetails}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="details-modal-body">
+              <div className="details-grid">
+                <div className="details-panel">
+                  <h4 className="details-panel-title">Submitted Application Preview</h4>
+                  <div className="details-row">
+                    <span className="details-label">Full Name</span>
+                    <span className="details-value">{formatValue(detailsUser?.name)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Email</span>
+                    <span className="details-value">{formatValue(detailsUser?.email)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Phone Number</span>
+                    <span className="details-value">
+                      {formatValue(detailsUser?.phoneNumber ?? detailsUser?.phone ?? detailsUser?.mobile)}
+                    </span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Current Profession</span>
+                    <span className="details-value">{formatValue(detailsUser?.profession ?? detailsUser?.currentProfession)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Education Level</span>
+                    <span className="details-value">{formatValue(detailsUser?.educationLevel ?? detailsUser?.education)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">College / University</span>
+                    <span className="details-value">
+                      {formatValue(
+                        detailsUser?.collegeName ??
+                          detailsUser?.college ??
+                          detailsUser?.university ??
+                          detailsUser?.collegeOrUniversity
+                      )}
+                    </span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Graduation Year</span>
+                    <span className="details-value">{formatValue(detailsUser?.graduationYear ?? detailsUser?.gradYear)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Skills</span>
+                    <span className="details-value">{formatValue(detailsUser?.skills)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Cover Letter</span>
+                    <span className="details-value">{formatValue(detailsUser?.coverLetter)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Resume on file</span>
+                    <span className="details-value">{formatValue(detailsUser?.resumeOriginalFileName)}</span>
+                  </div>
+                </div>
+
+                <div className="details-panel">
+                  <h4 className="details-panel-title">Application Summary</h4>
+                  <div className="details-row">
+                    <span className="details-label">ID</span>
+                    <span className="details-value">{formatValue(detailsUser?.id)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Role</span>
+                    <span className="details-value">{formatValue(detailsUser?.role)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Account Status</span>
+                    <span className="details-value">{formatValue(detailsUser?.accountStatus)}</span>
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">Applied Booth IDs</span>
+                    <span className="details-value">{formatValue(detailsUser?.appliedBoothIds)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="details-modal-footer">
+                <button type="button" className="details-primary-button" onClick={closeUserDetails}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,27 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"));
+  const [user, setUser] = useState(() => {
     const userData = localStorage.getItem("user");
-    let parsedUser = null;
-
-    if (userData && userData !== "undefined" && userData !== "null") {
-      try {
-        parsedUser = JSON.parse(userData);
-      } catch (e) {
-        console.warn("Failed to parse stored user data:", e);
-      }
+    if (!userData || userData === "undefined" || userData === "null") return null;
+    try {
+      return JSON.parse(userData);
+    } catch (e) {
+      console.warn("Failed to parse stored user data:", e);
+      return null;
     }
-
-    setIsLoggedIn(!!token);
-    setUser(parsedUser);
-  }, []);
+  });
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("token");

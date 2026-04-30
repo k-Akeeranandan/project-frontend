@@ -8,9 +8,19 @@ function BoothDetails() {
   const navigate = useNavigate();
   const [booth, setBooth] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [applied, setApplied] = useState(false);
+  const [applied] = useState(false);
   const [error, setError] = useState("");
-  const [resumeFileName, setResumeFileName] = useState(null);
+  const [resumeFileName, setResumeFileName] = useState(() => {
+    if (!localStorage.getItem("token")) return null;
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw || raw === "undefined" || raw === "null") return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.resumeOriginalFileName || null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -36,17 +46,14 @@ function BoothDetails() {
         }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Failed to load booth details");
         setLoading(false);
       });
   }, [id, navigate]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      setResumeFileName(null);
-      return;
-    }
+    if (!localStorage.getItem("token")) return;
     getCurrentUserProfile()
       .then((profile) => {
         setResumeFileName(profile.resumeOriginalFileName || null);

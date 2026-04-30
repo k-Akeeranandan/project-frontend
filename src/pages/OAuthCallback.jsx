@@ -1,25 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
 function OAuthCallback() {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
 
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const token = params.get("token");
   const oauthError = params.get("error");
+  const errorMessage = oauthError
+    ? "OAuth sign-in failed. Please try again."
+    : !token
+      ? "Missing token from OAuth sign-in."
+      : "";
 
   useEffect(() => {
-    if (oauthError) {
-      setError("OAuth sign-in failed. Please try again.");
-      return;
-    }
-
-    if (!token) {
-      setError("Missing token from OAuth sign-in.");
-      return;
-    }
+    if (oauthError || !token) return;
 
     localStorage.setItem("token", token);
 
@@ -43,7 +39,11 @@ function OAuthCallback() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Signing you in…</h2>
-        <p>{error ? error : "Please wait while we complete Google/GitHub login."}</p>
+        <p>
+          {errorMessage
+            ? errorMessage
+            : "Please wait while we complete Google/GitHub login."}
+        </p>
       </div>
     </div>
   );

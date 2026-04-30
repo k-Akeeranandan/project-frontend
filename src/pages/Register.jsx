@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../services/authService";
-import API from "../api";
 
 function Register() {
   const [name, setName] = useState("");
@@ -12,14 +11,99 @@ function Register() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const startOAuth = (provider) => {
-    const baseURL = API?.defaults?.baseURL;
-    if (!baseURL) {
-      setError("OAuth is not configured. Missing API base URL.");
+  const [oauthModalOpen, setOauthModalOpen] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState("");
+  const [oauthStep, setOauthStep] = useState(1);
+  const [oauthEmail, setOauthEmail] = useState("");
+  const [oauthName, setOauthName] = useState("");
+  const [oauthPassword, setOauthPassword] = useState("");
+  const [oauthConfirmPassword, setOauthConfirmPassword] = useState("");
+  const [oauthSubmitting, setOauthSubmitting] = useState(false);
+  const [oauthError, setOauthError] = useState("");
+
+  const openOauthModal = (provider) => {
+    setError("");
+    setOauthError("");
+    setOauthProvider(provider);
+    setOauthStep(1);
+    setOauthEmail("");
+    setOauthName("");
+    setOauthPassword("");
+    setOauthConfirmPassword("");
+    setOauthModalOpen(true);
+  };
+
+  const closeOauthModal = () => {
+    if (oauthSubmitting) return;
+    setOauthModalOpen(false);
+  };
+
+  const providerLabel =
+    oauthProvider === "google"
+      ? "Google"
+      : oauthProvider === "github"
+        ? "GitHub"
+        : "OAuth";
+
+  const validateOauthStep1 = () => {
+    if (!oauthEmail.trim()) return "Email is required.";
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(oauthEmail.trim());
+    if (!isValidEmail) return "Please enter a valid email address.";
+    return "";
+  };
+
+  const validateOauthStep2 = () => {
+    if (!oauthName.trim()) return "Username / full name is required.";
+    if (!oauthPassword) return "Password is required.";
+    if (oauthPassword.length < 6) return "Password must be at least 6 characters.";
+    if (oauthPassword !== oauthConfirmPassword) return "Passwords do not match.";
+    return "";
+  };
+
+  const handleOauthNext = async () => {
+    setOauthError("");
+
+    if (oauthStep === 1) {
+      const message = validateOauthStep1();
+      if (message) {
+        setOauthError(message);
+        return;
+      }
+      setOauthStep(2);
       return;
     }
 
-    window.location.assign(`${baseURL}/auth/${provider}`);
+    if (oauthStep === 2) {
+      const message = validateOauthStep2();
+      if (message) {
+        setOauthError(message);
+        return;
+      }
+
+      setOauthSubmitting(true);
+      try {
+        await registerUser({
+          name: oauthName.trim(),
+          email: oauthEmail.trim(),
+          password: oauthPassword,
+        });
+        setOauthStep(3);
+      } catch (err) {
+        const errorMessage =
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          "Registration failed. Please try again.";
+        setOauthError(errorMessage);
+      } finally {
+        setOauthSubmitting(false);
+      }
+    }
+  };
+
+  const handleOauthFinish = () => {
+    closeOauthModal();
+    navigate("/login");
   };
 
   const handleRegister = async (e) => {
@@ -117,7 +201,7 @@ function Register() {
           <button
             type="button"
             className="oauth-button oauth-google"
-            onClick={() => startOAuth("google")}
+            onClick={() => openOauthModal("google")}
             disabled={loading}
           >
             <span className="oauth-icon" aria-hidden="true">
@@ -151,7 +235,7 @@ function Register() {
           <button
             type="button"
             className="oauth-button oauth-github"
-            onClick={() => startOAuth("github")}
+            onClick={() => openOauthModal("github")}
             disabled={loading}
           >
             <span className="oauth-icon" aria-hidden="true">
@@ -173,6 +257,211 @@ function Register() {
           Already have an account? <Link to="/login">Login here</Link>
         </div>
       </div>
+
+      {oauthModalOpen && (
+        <div
+          className="oauth-modal-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeOauthModal();
+          }}
+          role="presentation"
+        >
+          <div
+            className="oauth-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${providerLabel} registration`}
+          >
+            <div className="oauth-modal-header">
+              <div className="oauth-modal-top">
+                <div>
+                  <div className="oauth-step-chip">
+                    Step {oauthStep} of 3
+                  </div>
+                  <h3 className="oauth-modal-title">
+                    {oauthStep === 1
+                      ? `Continue with ${providerLabel}`
+                      : oauthStep === 2
+                        ? "Set up your account"
+                        : "Registration complete"}
+                  </h3>
+                  <p className="oauth-modal-description">
+                    {oauthStep === 1
+                      ? "Enter your email to continue."
+                      : oauthStep === 2
+                        ? "Choose a username and password."
+                        : "You’ve successfully completed the registration."}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="oauth-close-button"
+                  onClick={closeOauthModal}
+                  aria-label="Close"
+                  disabled={oauthSubmitting}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="oauth-progress" aria-hidden="true">
+                <div
+                  className={[
+                    "oauth-progress-segment",
+                    oauthStep === 1 ? "is-active" : "is-complete",
+                  ].join(" ")}
+                />
+                <div
+                  className={[
+                    "oauth-progress-segment",
+                    oauthStep === 2 ? "is-active" : oauthStep > 2 ? "is-complete" : "",
+                  ].join(" ")}
+                />
+                <div
+                  className={[
+                    "oauth-progress-segment",
+                    oauthStep === 3 ? "is-active" : "",
+                  ].join(" ")}
+                />
+              </div>
+            </div>
+
+            <div className="oauth-modal-body">
+              {oauthError && (
+                <div className="oauth-alert oauth-alert-error">{oauthError}</div>
+              )}
+
+              {oauthStep === 1 && (
+                <div className="oauth-form">
+                  <label className="oauth-field-label" htmlFor="oauth-email">
+                    Email address
+                  </label>
+                  <input
+                    id="oauth-email"
+                    type="email"
+                    className="oauth-input"
+                    value={oauthEmail}
+                    onChange={(e) => setOauthEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    disabled={oauthSubmitting}
+                    required
+                  />
+                </div>
+              )}
+
+              {oauthStep === 2 && (
+                <div className="oauth-form">
+                  <label className="oauth-field-label" htmlFor="oauth-name">
+                    Username / full name
+                  </label>
+                  <input
+                    id="oauth-name"
+                    type="text"
+                    className="oauth-input"
+                    value={oauthName}
+                    onChange={(e) => setOauthName(e.target.value)}
+                    placeholder="Your name"
+                    autoComplete="name"
+                    disabled={oauthSubmitting}
+                    required
+                  />
+
+                  <label className="oauth-field-label" htmlFor="oauth-password">
+                    Password
+                  </label>
+                  <input
+                    id="oauth-password"
+                    type="password"
+                    className="oauth-input"
+                    value={oauthPassword}
+                    onChange={(e) => setOauthPassword(e.target.value)}
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                    disabled={oauthSubmitting}
+                    required
+                  />
+
+                  <label className="oauth-field-label" htmlFor="oauth-confirm-password">
+                    Confirm password
+                  </label>
+                  <input
+                    id="oauth-confirm-password"
+                    type="password"
+                    className="oauth-input"
+                    value={oauthConfirmPassword}
+                    onChange={(e) => setOauthConfirmPassword(e.target.value)}
+                    placeholder="Repeat your password"
+                    autoComplete="new-password"
+                    disabled={oauthSubmitting}
+                    required
+                  />
+                </div>
+              )}
+
+              {oauthStep === 3 && (
+                <div className="oauth-alert oauth-alert-success">
+                  Completed the registration.
+                </div>
+              )}
+
+              <div className="oauth-modal-footer">
+                {oauthStep < 3 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="oauth-cancel-link"
+                      onClick={closeOauthModal}
+                      disabled={oauthSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <div className="oauth-footer-actions">
+                      {oauthStep === 2 && (
+                        <button
+                          type="button"
+                          className="oauth-secondary-link"
+                          onClick={() => {
+                            if (oauthSubmitting) return;
+                            setOauthError("");
+                            setOauthStep(1);
+                          }}
+                          disabled={oauthSubmitting}
+                        >
+                          Back
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="oauth-primary-button"
+                        onClick={handleOauthNext}
+                        disabled={oauthSubmitting}
+                      >
+                        {oauthSubmitting
+                          ? "Finishing..."
+                          : oauthStep === 2
+                            ? "Finish"
+                            : "Next"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="oauth-primary-button"
+                      onClick={handleOauthFinish}
+                    >
+                      Go to login
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

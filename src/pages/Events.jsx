@@ -8,18 +8,15 @@ function Events() {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn] = useState(() => !!localStorage.getItem("token"));
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
-
     const userData = localStorage.getItem("user");
     try {
       const u = userData && userData !== "undefined" && userData !== "null"
         ? JSON.parse(userData)
         : null;
       if (u?.role === "ADMIN") {
-        setLoading(false);
         navigate("/admin", { replace: true });
         return;
       }

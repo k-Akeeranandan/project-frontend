@@ -7,29 +7,24 @@ import { isEventVisibleToUsers } from "../utils/eventStatus";
 function Home() {
   const [events, setEvents] = useState([]);
   const [myApplications, setMyApplications] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isLoggedIn] = useState(() => !!localStorage.getItem("token"));
+  const [user] = useState(() => {
+    const userData = localStorage.getItem("user");
+    if (!userData || userData === "undefined" || userData === "null") return null;
+    try {
+      return JSON.parse(userData);
+    } catch (e) {
+      console.warn("Failed to parse user data:", e);
+      return null;
+    }
+  });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    setIsLoggedIn(!!token);
-
-    let parsed = null;
-    if (userData && userData !== "undefined" && userData !== "null") {
-      try {
-        parsed = JSON.parse(userData);
-        setUser(parsed);
-      } catch (e) {
-        console.warn("Failed to parse user data:", e);
-      }
-    }
-
-    if (token && parsed?.role !== "ADMIN") {
+    if (isLoggedIn && user?.role !== "ADMIN") {
       getEvents().then(setEvents).catch(console.error);
       getMyApplications().then(setMyApplications).catch(console.error);
     }
-  }, []);
+  }, [isLoggedIn, user?.role]);
 
   const visibleEvents = (Array.isArray(events) ? events : []).filter((e) =>
     isEventVisibleToUsers(e?.date)
