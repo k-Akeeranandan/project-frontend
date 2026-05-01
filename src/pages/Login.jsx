@@ -37,6 +37,7 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [captcha, setCaptcha] = useState(() => createCaptcha());
@@ -192,39 +193,52 @@ function Login() {
 
   return (
     <div className="auth-container">
-      <div className="auth-box">
-        <h2>🔐 Login</h2>
-        <p>Welcome back! Sign in to your account</p>
+      <div className="auth-box login-box">
+        <div className="auth-header">
+          <span className="auth-badge">Welcome back</span>
+          <h2>Login</h2>
+          <p>Sign in to continue exploring events, booths, and applications.</p>
+        </div>
 
         {error && (
-          <div style={{
-            padding: "10px",
-            marginBottom: "15px",
-            background: "#fee2e2",
-            color: "#991b1b",
-            borderRadius: "8px",
-            fontSize: "0.9rem"
-          }}>
-            {error}
+          <div className="auth-alert auth-alert-error" role="alert" aria-live="polite">
+            <strong>Login failed</strong>
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="📧 Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <form onSubmit={handleLogin} className="auth-form">
+          <label className="auth-field">
+            <span>Email Address</span>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
 
-          <input
-            type="password"
-            placeholder="🔑 Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <label className="auth-field">
+            <span>Password</span>
+            <div className="password-field">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </label>
 
           <div className="captcha-card">
             <div className="captcha-row">
@@ -253,13 +267,13 @@ function Login() {
             />
           </div>
 
-          <button type="submit" disabled={loading}>
+          <button type="submit" disabled={loading} className="auth-submit-button">
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         {forgotStep === 0 && (
-          <div className="link-text" style={{ marginTop: "12px" }}>
+          <div className="link-text login-link-text">
             <button
               type="button"
               onClick={startForgotPassword}
@@ -288,7 +302,7 @@ function Login() {
               <div className="forgot-modal-top">
                 <div>
                   <div className="forgot-step-chip">
-                    🔐 {forgotStepDetails[forgotStep].label}
+                    {forgotStepDetails[forgotStep].label}
                   </div>
                   <h3 className="forgot-modal-title">
                     {forgotStepDetails[forgotStep].title}
@@ -303,7 +317,7 @@ function Login() {
                   className="forgot-close-button"
                   aria-label="Close forgot password dialog"
                 >
-                  ×
+                  x
                 </button>
               </div>
 
@@ -322,130 +336,130 @@ function Login() {
             </div>
 
             <div className="forgot-modal-body">
-            {forgotError && (
-              <div className="forgot-alert forgot-alert-error">
-                {forgotError}
-              </div>
-            )}
-
-            {forgotSuccess && (
-              <div className="forgot-alert forgot-alert-success">
-                {forgotSuccess}
-              </div>
-            )}
-
-            {forgotStep === 1 && (
-              <form onSubmit={handleSendOtp} className="forgot-form">
-                <label className="forgot-field-label">
-                  Email Address
-                </label>
-                <input
-                  className="forgot-input"
-                  type="email"
-                  placeholder="📧 Enter your account email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  required
-                />
-                <div className="forgot-help-text">
-                  We will send a 6-digit OTP to this email address.
+              {forgotError && (
+                <div className="forgot-alert forgot-alert-error" role="alert">
+                  {forgotError}
                 </div>
-                <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
-                  {forgotLoading ? "Sending OTP..." : "Send OTP"}
-                </button>
-              </form>
-            )}
+              )}
 
-            {forgotStep === 2 && (
-              <form onSubmit={handleVerifyOtp} className="forgot-form">
-                <label className="forgot-field-label">
-                  Email Address
-                </label>
-                <input
-                  className="forgot-input"
-                  type="email"
-                  placeholder="📧 Enter your account email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  required
-                />
-                <label className="forgot-field-label">
-                  One-Time Password
-                </label>
-                <input
-                  className="forgot-input"
-                  type="text"
-                  placeholder="🔢 Enter OTP"
-                  value={forgotOtp}
-                  onChange={(e) => setForgotOtp(e.target.value)}
-                  required
-                />
-                <div className="forgot-help-text">
-                  Enter the OTP exactly as received in your email.
+              {forgotSuccess && (
+                <div className="forgot-alert forgot-alert-success">
+                  {forgotSuccess}
                 </div>
-                <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
-                  {forgotLoading ? "Verifying..." : "Verify OTP"}
-                </button>
-              </form>
-            )}
+              )}
 
-            {forgotStep === 3 && (
-              <form onSubmit={handleResetPassword} className="forgot-form">
-                <label className="forgot-field-label">
-                  New Password
-                </label>
-                <input
-                  className="forgot-input"
-                  type="password"
-                  placeholder="🔑 New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-                <label className="forgot-field-label">
-                  Confirm Password
-                </label>
-                <input
-                  className="forgot-input"
-                  type="password"
-                  placeholder="🔒 Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-                <div className="forgot-help-text">
-                  Use at least 6 characters and make sure both passwords match.
-                </div>
-                <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
-                  {forgotLoading ? "Updating..." : "Change Password"}
-                </button>
-              </form>
-            )}
-
-            <div className="forgot-modal-footer">
-              <div>
-                {forgotStep > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForgotStep(forgotStep - 1);
-                      setForgotError("");
-                      setForgotSuccess("");
-                    }}
-                    className="forgot-secondary-link"
-                  >
-                    ← Back
+              {forgotStep === 1 && (
+                <form onSubmit={handleSendOtp} className="forgot-form">
+                  <label className="forgot-field-label">
+                    Email Address
+                  </label>
+                  <input
+                    className="forgot-input"
+                    type="email"
+                    placeholder="Enter your account email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                  <div className="forgot-help-text">
+                    We will send a 6-digit OTP to this email address.
+                  </div>
+                  <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
+                    {forgotLoading ? "Sending OTP..." : "Send OTP"}
                   </button>
-                )}
+                </form>
+              )}
+
+              {forgotStep === 2 && (
+                <form onSubmit={handleVerifyOtp} className="forgot-form">
+                  <label className="forgot-field-label">
+                    Email Address
+                  </label>
+                  <input
+                    className="forgot-input"
+                    type="email"
+                    placeholder="Enter your account email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                  <label className="forgot-field-label">
+                    One-Time Password
+                  </label>
+                  <input
+                    className="forgot-input"
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value)}
+                    required
+                  />
+                  <div className="forgot-help-text">
+                    Enter the OTP exactly as received in your email.
+                  </div>
+                  <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
+                    {forgotLoading ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </form>
+              )}
+
+              {forgotStep === 3 && (
+                <form onSubmit={handleResetPassword} className="forgot-form">
+                  <label className="forgot-field-label">
+                    New Password
+                  </label>
+                  <input
+                    className="forgot-input"
+                    type="password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                  <label className="forgot-field-label">
+                    Confirm Password
+                  </label>
+                  <input
+                    className="forgot-input"
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  <div className="forgot-help-text">
+                    Use at least 6 characters and make sure both passwords match.
+                  </div>
+                  <button type="submit" disabled={forgotLoading} className="forgot-primary-button">
+                    {forgotLoading ? "Updating..." : "Change Password"}
+                  </button>
+                </form>
+              )}
+
+              <div className="forgot-modal-footer">
+                <div>
+                  {forgotStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotStep(forgotStep - 1);
+                        setForgotError("");
+                        setForgotSuccess("");
+                      }}
+                      className="forgot-secondary-link"
+                    >
+                      Back
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={closeForgotPassword}
+                  className="forgot-cancel-link"
+                >
+                  Cancel
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={closeForgotPassword}
-                className="forgot-cancel-link"
-              >
-                Cancel
-              </button>
-            </div>
             </div>
           </div>
         </div>

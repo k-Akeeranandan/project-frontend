@@ -26,43 +26,29 @@ function Navbar() {
 
   return (
     <nav className="main-nav">
-      <h2>🎯 Career Fair</h2>
+      <Link to="/" className="nav-brand" aria-label="Career Fair home">
+        <span className="nav-brand-mark">CF</span>
+        <span className="nav-brand-text">Career Fair</span>
+      </Link>
 
       <div className="nav-links">
-        <Link to="/">Home</Link>
+        <Link to="/" className="nav-link">Home</Link>
         {(!isLoggedIn || user?.role !== "ADMIN") && (
-          <Link to="/events">Events</Link>
+          <Link to="/events" className="nav-link">Events</Link>
         )}
         
         {!isLoggedIn ? (
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/register" className="nav-link nav-link-cta">Register</Link>
           </>
         ) : (
           <>
-            <Link to="/chat">Chat</Link>
-            {user && user.role === 'ADMIN' && <Link to="/admin">Admin</Link>}
+            <Link to="/chat" className="nav-link">Chat</Link>
+            {user && user.role === 'ADMIN' && <Link to="/admin" className="nav-link">Admin</Link>}
             <button
               onClick={handleLogout}
-              style={{
-                background: "#ff6b6b",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "600",
-                transition: "all 0.3s ease"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.background = "#ff5252";
-                e.target.style.transform = "translateY(-2px)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.background = "#ff6b6b";
-                e.target.style.transform = "translateY(0)";
-              }}
+              className="nav-logout"
             >
               Logout
             </button>

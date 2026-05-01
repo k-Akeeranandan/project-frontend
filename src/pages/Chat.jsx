@@ -150,244 +150,160 @@ function Chat() {
         : "Personal Chat";
 
   return (
-    <div className="page-shell">
-      <div className="page-header">
-        <div className="page-title">
-          <h2>💬 Chat Center</h2>
+    <main className="chat-page page-shell">
+      <section className="chat-hero">
+        <div>
+          <span className="chat-kicker">Messages</span>
+          <h1>Chat Center</h1>
           <p>Use global chat for everyone, or personal chat for one-to-one conversations.</p>
         </div>
-      </div>
+        <div className="chat-hero-user">
+          <span>Signed in as</span>
+          <strong>{currentUser?.name || currentUser?.email || "User"}</strong>
+        </div>
+      </section>
 
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "280px 1fr",
-        gap: "24px",
-        alignItems: "start"
-      }}>
-        <div style={{
-          background: "white",
-          borderRadius: "16px",
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08)",
-          padding: "20px"
-        }}>
-          <div style={{ display: "flex", gap: "10px", marginBottom: "18px" }}>
+      <section className="chat-layout">
+        <aside className="chat-sidebar" aria-label="Chat navigation">
+          <div className="chat-tabs" role="tablist" aria-label="Chat type">
             <button
               type="button"
               onClick={() => setActiveTab("global")}
-              style={{
-                flex: 1,
-                padding: "10px 12px",
-                borderRadius: "10px",
-                border: "none",
-                background: activeTab === "global" ? "linear-gradient(90deg, #667eea 0%, #764ba2 100%)" : "#e2e8f0",
-                color: activeTab === "global" ? "white" : "#334155",
-                fontWeight: "700",
-                cursor: "pointer"
-              }}
+              className={`chat-tab${activeTab === "global" ? " is-active" : ""}`}
             >
               Global
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("personal")}
-              style={{
-                flex: 1,
-                padding: "10px 12px",
-                borderRadius: "10px",
-                border: "none",
-                background: activeTab === "personal" ? "linear-gradient(90deg, #667eea 0%, #764ba2 100%)" : "#e2e8f0",
-                color: activeTab === "personal" ? "white" : "#334155",
-                fontWeight: "700",
-                cursor: "pointer"
-              }}
+              className={`chat-tab${activeTab === "personal" ? " is-active" : ""}`}
             >
               Personal
             </button>
           </div>
 
-          <div style={{ color: "#64748b", fontSize: "0.92rem", marginBottom: "14px" }}>
+          <p className="chat-sidebar-note">
             {activeTab === "global"
               ? "Everyone can read and send messages here."
               : "Choose a person to start a private chat."}
-          </div>
+          </p>
 
           {activeTab === "personal" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div className="chat-contacts">
               {contacts.length === 0 && (
-                <div style={{ color: "#64748b", fontSize: "0.92rem" }}>No contacts available.</div>
+                <div className="chat-empty-mini">No contacts available.</div>
               )}
               {contacts.map((contact) => (
                 <button
                   key={contact.id}
                   type="button"
                   onClick={() => setSelectedContactId(String(contact.id))}
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    border: String(contact.id) === String(selectedContactId) ? "2px solid #667eea" : "1px solid #e2e8f0",
-                    background: String(contact.id) === String(selectedContactId) ? "#eef2ff" : "white",
-                    cursor: "pointer"
-                  }}
+                  className={`chat-contact${String(contact.id) === String(selectedContactId) ? " is-selected" : ""}`}
                 >
-                  <div style={{ fontWeight: "700", color: "#0f172a" }}>{contact.name}</div>
-                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
-                    {contact.role} · {contact.email}
-                  </div>
+                  <span className="chat-contact-avatar">
+                    {(contact.name || contact.email || "?").slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="chat-contact-main">
+                    <strong>{contact.name}</strong>
+                    <small>{contact.role} · {contact.email}</small>
+                  </span>
                 </button>
               ))}
             </div>
           )}
 
           {activeTab === "global" && (
-            <div style={{
-              padding: "14px",
-              borderRadius: "12px",
-              background: "#f8fafc",
-              color: "#475569",
-              fontSize: "0.92rem",
-              lineHeight: 1.5
-            }}>
-              Post announcements, ask questions, or talk with everyone attending the fair.
+            <div className="chat-info-card">
+              <strong>Global room</strong>
+              <span>Post announcements, ask questions, or talk with everyone attending the fair.</span>
             </div>
           )}
-        </div>
+        </aside>
 
-        <div style={{
-          background: "white",
-          borderRadius: "16px",
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08)",
-          minHeight: "600px",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden"
-        }}>
-          <div style={{
-            padding: "18px 22px",
-            borderBottom: "1px solid #e2e8f0",
-            background: "#f8fafc"
-          }}>
-            <h3 style={{ margin: 0, color: "#0f172a" }}>{pageTitle}</h3>
-            <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.92rem" }}>
-              Logged in as {currentUser?.name || currentUser?.email || "User"}
-            </p>
-          </div>
+        <section className="chat-panel" aria-label={pageTitle}>
+          <header className="chat-panel-header">
+            <div>
+              <h2>{pageTitle}</h2>
+              <p>
+                {activeTab === "global"
+                  ? "Shared room for all fair participants"
+                  : selectedContact
+                    ? `${selectedContact.role} · ${selectedContact.email}`
+                    : "Select a contact to start chatting"}
+              </p>
+            </div>
+            <span className="chat-status-pill">{activeTab === "global" ? "Public" : "Private"}</span>
+          </header>
 
           {error && (
-            <div style={{
-              margin: "16px 16px 0",
-              padding: "12px 14px",
-              background: "#fee2e2",
-              color: "#991b1b",
-              borderRadius: "10px",
-              fontSize: "0.92rem"
-            }}>
+            <div className="chat-alert" role="alert">
               {error}
             </div>
           )}
 
-          <div style={{
-            flex: 1,
-            padding: "18px",
-            overflowY: "auto",
-            background: "#f8fafc",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px"
-          }}>
+          <div className="chat-messages" aria-live="polite">
             {loading ? (
-              <div style={{ color: "#64748b" }}>Loading messages...</div>
+              <div className="chat-state">
+                <div className="chat-loader" aria-hidden="true" />
+                <span>Loading messages...</span>
+              </div>
             ) : messages.length === 0 ? (
-              <div style={{ color: "#64748b" }}>
-                {activeTab === "global"
-                  ? "No global messages yet."
-                  : selectedContact
-                    ? "No personal messages yet."
-                    : "Select a contact to start chatting."}
+              <div className="chat-state">
+                <strong>
+                  {activeTab === "global"
+                    ? "No global messages yet"
+                    : selectedContact
+                      ? "No personal messages yet"
+                      : "Select a contact to start chatting"}
+                </strong>
+                <span>
+                  {activeTab === "global"
+                    ? "Start the conversation with a helpful update or question."
+                    : selectedContact
+                      ? "Send the first private message when you are ready."
+                      : "Your private conversation will appear here."}
+                </span>
               </div>
             ) : (
               messages.map((message) => {
                 const mine = String(message.senderId) === String(currentUser?.id);
                 return (
-                  <div
+                  <article
                     key={message.id}
-                    style={{
-                      alignSelf: mine ? "flex-end" : "flex-start",
-                      maxWidth: "75%",
-                      background: mine
-                        ? "linear-gradient(90deg, #667eea 0%, #764ba2 100%)"
-                        : "white",
-                      color: mine ? "white" : "#0f172a",
-                      borderRadius: "16px",
-                      padding: "12px 14px",
-                      boxShadow: "0 6px 18px rgba(15, 23, 42, 0.08)"
-                    }}
+                    className={`chat-message${mine ? " is-mine" : ""}`}
                   >
-                    <div style={{
-                      fontSize: "0.8rem",
-                      fontWeight: "700",
-                      marginBottom: "6px",
-                      opacity: mine ? 0.9 : 0.75
-                    }}>
+                    <div className="chat-message-meta">
                       {mine ? "You" : `${message.senderName} (${message.senderRole})`}
                     </div>
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{message.content}</div>
-                    <div style={{
-                      marginTop: "6px",
-                      fontSize: "0.75rem",
-                      opacity: mine ? 0.8 : 0.6,
-                      textAlign: "right"
-                    }}>
+                    <div className="chat-message-content">{message.content}</div>
+                    <time className="chat-message-time">
                       {message.createdAt ? new Date(message.createdAt).toLocaleString() : ""}
-                    </div>
-                  </div>
+                    </time>
+                  </article>
                 );
               })
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSend} style={{
-            padding: "16px",
-            borderTop: "1px solid #e2e8f0",
-            display: "flex",
-            gap: "12px",
-            background: "white"
-          }}>
+          <form onSubmit={handleSend} className="chat-composer">
             <input
               type="text"
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder={activeTab === "global" ? "Type a message for everyone..." : "Type a private message..."}
               disabled={activeTab === "personal" && !selectedContactId}
-              style={{
-                flex: 1,
-                padding: "12px 14px",
-                borderRadius: "12px",
-                border: "1px solid #cbd5e1",
-                fontSize: "0.95rem"
-              }}
             />
             <button
               type="submit"
               disabled={sending || (activeTab === "personal" && !selectedContactId)}
-              style={{
-                padding: "12px 18px",
-                border: "none",
-                borderRadius: "12px",
-                background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                fontWeight: "700",
-                cursor: "pointer"
-              }}
             >
               {sending ? "Sending..." : "Send"}
             </button>
           </form>
-        </div>
-      </div>
-    </div>
+        </section>
+      </section>
+    </main>
   );
 }
 

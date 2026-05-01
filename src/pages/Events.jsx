@@ -45,9 +45,9 @@ function Events() {
 
   if (loading) {
     return (
-      <div className="page-shell">
-        <div style={{ textAlign: "center", padding: "50px" }}>
-          <div style={{ fontSize: "2rem", marginBottom: "20px" }}>⏳</div>
+      <div className="events-page page-shell">
+        <div className="events-loading">
+          <div className="events-loading-ring" aria-hidden="true" />
           <p>Loading events...</p>
         </div>
       </div>
@@ -55,33 +55,30 @@ function Events() {
   }
 
   return (
-    <div className="page-shell">
-      <div className="page-header">
-        <div className="page-title">
-          <h2>📅 Career Fair Events</h2>
-          <p>Discover upcoming virtual career fairs and connect with top companies</p>
+    <main className="events-page page-shell">
+      <section className="events-hero">
+        <div className="events-hero-copy">
+          <span className="events-kicker">Live opportunities</span>
+          <h1>Career Fair Events</h1>
+          <p>Discover upcoming virtual career fairs and connect with top companies.</p>
         </div>
-      </div>
+        <div className="events-hero-stat" aria-label="Visible events count">
+          <span>Live & Upcoming</span>
+          <strong>{upcomingEvents.length}</strong>
+        </div>
+      </section>
 
-      {/* Upcoming / Live */}
       {upcomingEvents.length > 0 && (
         <>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginBottom: "18px"
-          }}>
-            <h3 style={{ margin: 0, color: "#0f172a" }}>Live & Upcoming</h3>
+          <div className="events-section-heading">
+            <div>
+              <span>Available now</span>
+              <h2>Live & Upcoming</h2>
+            </div>
+            <p>{upcomingEvents.length} event{upcomingEvents.length === 1 ? "" : "s"} ready to explore</p>
           </div>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-            gap: "30px"
-          }}>
+          <div className="events-grid">
             {upcomingEvents.map((event) => (
               <EventCard key={event.id} event={event} isLoggedIn={isLoggedIn} />
             ))}
@@ -89,24 +86,14 @@ function Events() {
         </>
       )}
 
-      {/* Empty state */}
       {upcomingEvents.length === 0 && (
-        <div style={{
-          background: "white",
-          borderRadius: "15px",
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-          padding: "28px"
-        }}>
-          <div style={{ textAlign: "center", padding: "18px 0 6px" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "10px" }}>📅</div>
-            <h3 style={{ margin: "0 0 8px", color: "#0f172a" }}>No live or upcoming events right now</h3>
-            <p style={{ margin: 0, color: "#64748b" }}>
-              New events will appear here as soon as they are published.
-            </p>
-          </div>
-        </div>
+        <section className="events-empty">
+          <span>No events</span>
+          <h2>No live or upcoming events right now</h2>
+          <p>New events will appear here as soon as they are published.</p>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
 
